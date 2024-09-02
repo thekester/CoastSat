@@ -30,10 +30,12 @@ jobs:
       - name: Recreate Conda Environment
         shell: bash -l {0}
         run: |
-          conda deactivate
-          conda remove --name coastsat-env --all -y
+          echo "Recreating Conda Environment..."
+          conda deactivate || true
+          conda env remove --name coastsat-env --all -y || true
           conda create --name coastsat-env python=3.12 -y
           conda activate coastsat-env
+          echo "Environment recreated."
 
       - name: Initialize Conda and Install Dependencies
         shell: bash -l {0}
@@ -41,20 +43,13 @@ jobs:
           echo "Initializing Conda..."
           conda init bash
           source ~/.bashrc
-          echo "Conda initialized."
-
-          echo "Activating the environment..."
           conda activate coastsat-env
-
           echo "Installing dependencies..."
           conda install -c conda-forge sqlite -y
           conda install -c conda-forge geopandas -y
           conda install -c conda-forge earthengine-api scikit-image matplotlib astropy notebook -y
           pip install pyqt5 imageio-ffmpeg
-
-          echo "Installed packages:"
-          conda list
-          pip list
+          echo "Dependencies installed."
 
       - name: Debug EE Installation and Environment
         shell: bash -l {0}
@@ -64,13 +59,14 @@ jobs:
           python --version
           echo "Checking pip version..."
           pip --version
-          echo "Checking if ee module is installed..."
+          echo "Checking if 'ee' module is installed..."
           python -c "import ee; print('Earth Engine API version:', ee.__version__)"
-          echo "Checking GOOGLE_APPLICATION_CREDENTIALS..."
-          echo "$GOOGLE_APPLICATION_CREDENTIALS"
+          echo "Checking environment variables..."
+          echo "GOOGLE_APPLICATION_CREDENTIALS: $GOOGLE_APPLICATION_CREDENTIALS"
 
       - name: Set up Earth Engine Authentication
         run: |
+          conda activate coastsat-env
           echo "Writing GEE credentials to /tmp/gee_credentials.json..."
           echo "${{ secrets.GEE_SERVICE_ACCOUNT }}" > /tmp/gee_credentials.json
           export GOOGLE_APPLICATION_CREDENTIALS="/tmp/gee_credentials.json"
