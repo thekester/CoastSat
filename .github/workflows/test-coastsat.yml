@@ -3,10 +3,10 @@ name: Python Tests
 on:
   push:
     branches:
-      - '**'  # Trigger on push to any branch
+      - '**'
   pull_request:
     branches:
-      - '**'  # Trigger on pull request to any branch
+      - '**'
 
 jobs:
   test:
@@ -56,9 +56,15 @@ jobs:
           conda list
           pip list
 
+      - name: Set up Earth Engine Authentication
+        run: |
+          echo "${{ secrets.GEE_SERVICE_ACCOUNT }}" > /tmp/gee_credentials.json
+          export GOOGLE_APPLICATION_CREDENTIALS="/tmp/gee_credentials.json"
+          python -c "import ee; ee.Initialize()"
+
       - name: Run Python Test Script
         shell: bash -l {0}
         run: |
-          echo "Running the Python Test Script..."
           conda activate coastsat-env
+          echo "Running the Python Test Script..."
           python test.py
