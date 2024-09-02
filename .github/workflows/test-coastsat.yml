@@ -73,6 +73,8 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="/tmp/gee_credentials.json"
           echo "Running EE initialization..."
           python -c "import ee; ee.Initialize(); print('EE Initialized Successfully')"
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gee_credentials.json  # Ensure this is exported correctly
 
       - name: Run Python Test Script
         shell: bash -l {0}
