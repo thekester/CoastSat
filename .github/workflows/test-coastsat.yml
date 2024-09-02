@@ -24,16 +24,16 @@ jobs:
       - name: Install Miniconda
         uses: conda-incubator/setup-miniconda@v2
         with:
-          activate-environment: coastsat-env
+          activate-environment: gee-env
           python-version: 3.12
 
       - name: Recreate Conda Environment
         shell: bash -l {0}
         run: |
           conda deactivate || true
-          conda env remove --name coastsat-env --all -y || true
-          conda create --name coastsat-env python=3.12 -y
-          conda activate coastsat-env
+          conda env remove --name gee-env --all -y || true
+          conda create --name gee-env python=3.12 -y
+          conda activate gee-env
           echo "Environment recreated."
 
       - name: Initialize Conda and Install Dependencies
@@ -42,12 +42,10 @@ jobs:
           echo "Initializing Conda..."
           conda init bash
           source ~/.bashrc
-          conda activate coastsat-env
-          echo "Installing dependencies..."
-          conda install -c conda-forge sqlite -y
-          conda install -c conda-forge geopandas -y
-          conda install -c conda-forge earthengine-api scikit-image matplotlib astropy notebook geemap -y
-          pip install pyqt5 imageio-ffmpeg
+          conda activate gee-env
+          echo "Installing geemap and dependencies..."
+          conda install mamba -n base -c conda-forge -y
+          mamba install geemap geopandas localtileserver -c conda-forge -y
           echo "Dependencies installed."
 
       - name: Set up Google Earth Engine Authentication
@@ -61,6 +59,6 @@ jobs:
       - name: Run Python Test Script
         shell: bash -l {0}
         run: |
-          conda activate coastsat-env
+          conda activate gee-env
           echo "Running the Python Test Script..."
           python test.py
