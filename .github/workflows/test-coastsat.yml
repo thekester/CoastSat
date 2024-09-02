@@ -27,29 +27,29 @@ jobs:
           activate-environment: gee-env
           python-version: 3.12
 
-      - name: Recreate Conda Environment
-        shell: bash -l {0}
-        run: |
-          conda deactivate || true
-          conda env remove --name gee-env --all -y || true
-          conda create --name gee-env python=3.12 -y
-          conda activate gee-env
-          echo "Environment recreated."
-
       - name: Initialize Conda and Install Dependencies
         shell: bash -l {0}
         run: |
           echo "Initializing Conda..."
           conda init bash
-          source ~/.bashrc
+          source ~/.bashrc  # Ensures that conda is fully initialized
+          echo "Conda initialized."
+
+          echo "Creating and activating the gee-env..."
+          conda deactivate || true
+          conda env remove --name gee-env --all -y || true
+          conda create --name gee-env python=3.12 -y
           conda activate gee-env
+
           echo "Installing geemap and dependencies..."
           conda install mamba -n base -c conda-forge -y
           mamba install geemap geopandas localtileserver -c conda-forge -y
           echo "Dependencies installed."
 
       - name: Set up Google Earth Engine Authentication
+        shell: bash -l {0}
         run: |
+          source ~/.bashrc  # Ensures the environment is active
           echo "Writing GEE service account credentials to /tmp/gee_service_account.json..."
           echo "${{ secrets.GEE_SERVICE_ACCOUNT }}" > /tmp/gee_service_account.json
           export GOOGLE_APPLICATION_CREDENTIALS="/tmp/gee_service_account.json"
@@ -61,6 +61,7 @@ jobs:
       - name: Run Python Test Script
         shell: bash -l {0}
         run: |
+          source ~/.bashrc  # Ensures the environment is active
           conda activate gee-env
           echo "Running the Python Test Script..."
           python test.py
