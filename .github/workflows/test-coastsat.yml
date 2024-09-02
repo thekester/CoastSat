@@ -53,7 +53,7 @@ jobs:
           echo "Writing GEE service account credentials to /tmp/gee_service_account.json..."
           echo "${{ secrets.GEE_SERVICE_ACCOUNT }}" > /tmp/gee_service_account.json
           export GOOGLE_APPLICATION_CREDENTIALS="/tmp/gee_service_account.json"
-          echo "Testing Earth Engine Initialization with geemap..."
+          echo "Setting up geemap with service account..."
           conda activate gee-env
           python -c "import geemap; geemap.ee_initialize(); print('EE Initialized Successfully with geemap')"
           echo "Earth Engine Initialization Test Passed."
