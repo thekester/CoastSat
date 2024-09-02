@@ -27,54 +27,36 @@ jobs:
           activate-environment: coastsat-env
           python-version: 3.12
 
+      - name: Recreate Conda Environment
+        shell: bash -l {0}
+        run: |
+          conda deactivate || true
+          conda env remove --name coastsat-env --all -y || true
+          conda create --name coastsat-env python=3.12 -y
+          conda activate coastsat-env
+          echo "Environment recreated."
+
       - name: Initialize Conda and Install Dependencies
         shell: bash -l {0}
         run: |
           echo "Initializing Conda..."
           conda init bash
           source ~/.bashrc
-          echo "Conda initialized."
-
-          echo "Recreating Conda Environment..."
-          conda deactivate || true
-          conda env remove --name coastsat-env --all -y || true
-          conda create --name coastsat-env python=3.12 -y
           conda activate coastsat-env
-
           echo "Installing dependencies..."
           conda install -c conda-forge sqlite -y
           conda install -c conda-forge geopandas -y
-          conda install -c conda-forge earthengine-api scikit-image matplotlib astropy notebook -y
+          conda install -c conda-forge earthengine-api scikit-image matplotlib astropy notebook geemap -y
           pip install pyqt5 imageio-ffmpeg
-
           echo "Dependencies installed."
-          conda list
-          pip list
 
-      - name: Debug EE Installation and Environment
-        shell: bash -l {0}
+      - name: Set up Google Earth Engine Authentication
         run: |
-          conda activate coastsat-env
-          echo "Checking Python version..."
-          python --version
-          echo "Checking pip version..."
-          pip --version
-          echo "Checking if 'ee' module is installed..."
-          python -c "import ee; print('Earth Engine API version:', ee.__version__)"
-          echo "Checking environment variables..."
-          echo "GOOGLE_APPLICATION_CREDENTIALS: $GOOGLE_APPLICATION_CREDENTIALS"
-
-      - name: Set up Earth Engine Authentication
-        shell: bash -l {0}
-        run: |
-          conda activate coastsat-env
-          echo "Writing GEE credentials to /tmp/gee_credentials.json..."
-          echo "${{ secrets.GEE_SERVICE_ACCOUNT }}" > /tmp/gee_credentials.json
-          export GOOGLE_APPLICATION_CREDENTIALS="/tmp/gee_credentials.json"
-          echo "Running EE initialization..."
-          python -c "import ee; ee.Initialize(); print('EE Initialized Successfully')"
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gee_credentials.json  # Ensure this is exported correctly
+          echo "${{ secrets.GEE_SERVICE_ACCOUNT }}" > /tmp/gee_service_account.json
+          export GOOGLE_APPLICATION_CREDENTIALS="/tmp/gee_service_account.json"
+          echo "Testing Earth Engine Initialization with geemap..."
+          python -c "import geemap; geemap.ee_initialize(); print('EE Initialized Successfully with geemap')"
+          echo "Earth Engine Initialization Test Passed."
 
       - name: Run Python Test Script
         shell: bash -l {0}
