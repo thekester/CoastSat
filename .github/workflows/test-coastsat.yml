@@ -56,11 +56,26 @@ jobs:
           conda list
           pip list
 
+      - name: Debug EE Installation and Environment
+        shell: bash -l {0}
+        run: |
+          conda activate coastsat-env
+          echo "Checking Python version..."
+          python --version
+          echo "Checking pip version..."
+          pip --version
+          echo "Checking if ee module is installed..."
+          python -c "import ee; print('Earth Engine API version:', ee.__version__)"
+          echo "Checking GOOGLE_APPLICATION_CREDENTIALS..."
+          echo "$GOOGLE_APPLICATION_CREDENTIALS"
+
       - name: Set up Earth Engine Authentication
         run: |
+          echo "Writing GEE credentials to /tmp/gee_credentials.json..."
           echo "${{ secrets.GEE_SERVICE_ACCOUNT }}" > /tmp/gee_credentials.json
           export GOOGLE_APPLICATION_CREDENTIALS="/tmp/gee_credentials.json"
-          python -c "import ee; ee.Initialize()"
+          echo "Running EE initialization..."
+          python -c "import ee; ee.Initialize(); print('EE Initialized Successfully')"
 
       - name: Run Python Test Script
         shell: bash -l {0}

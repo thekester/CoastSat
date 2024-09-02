@@ -41,7 +41,7 @@ This guide explains how to set up authentication for Google Earth Engine (GEE) i
    - Name the secret `GEE_SERVICE_ACCOUNT`.
    - Open the `.json` key file you downloaded earlier.
    - Copy the entire content of the JSON file and paste it into the **Value** field.
-   - Click **Add secret** to save the credentials securely.
+   - Click **Add secret** to save the credentials securely. 
 
 ## Step 3: Modify Your GitHub Actions Workflow
 
