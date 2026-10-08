@@ -399,7 +399,8 @@ def retrieve_images(inputs):
                 fp_ms = filepaths[1]
                 fp_swir = filepaths[2]
                 fp_mask = filepaths[3]    
-                # select the 10 m ms bands, 20 m SWIR1, and available QA/SCL masks
+                # select bands (10 m RGB+NIR+s2cloudless, 20 m SWIR1,
+                # QA60 at 60 m or QA60+SCL at 20 m when SCL is available)
                 bands['ms'] = [im_bands[_] for _ in range(len(im_bands)) if im_bands[_]['id'] in bands_id[:5]]
                 bands['swir'] = [im_bands[_] for _ in range(len(im_bands)) if im_bands[_]['id'] in bands_id[5:6]]
                 bands['mask'] = [im_bands[_] for _ in range(len(im_bands))
