@@ -10,7 +10,7 @@ from skimage import morphology
 
 def load_mask_functions():
     """Load the mask functions without importing optional GDAL dependencies."""
-    source_path = Path(__file__).parent / 'coastsat' / 'SDS_preprocess.py'
+    source_path = Path(__file__).parent.parent / 'coastsat' / 'SDS_preprocess.py'
     tree = ast.parse(source_path.read_text(encoding='utf-8'))
     names = {'create_cloud_mask', 'create_snow_mask'}
     functions = [node for node in tree.body
