@@ -239,6 +239,22 @@ def retrieve_images(inputs):
                 im_cloud = ee.Image(im_dict_s2cloudless[i]['id'])
                 cloud_prob = im_cloud.select('probability').rename('s2cloudless')
                 image_ee = image_ee.addBands(cloud_prob)
+                # The Sentinel-2 scene classification layer identifies snow/ice
+                # (class 11). It is available in the harmonized surface reflectance
+                # collection, with the same system:index as the TOA image.
+                try:
+                    scl = ee.Image('COPERNICUS/S2_SR_HARMONIZED/' +
+                                   im_meta['properties']['system:index']).select('SCL')
+                    scl.bandNames().getInfo()  # force validation before adding the optional band
+                    # Keep the finer 20 m SCL grid and align QA60 to it so both
+                    # categorical layers can be stored in one mask raster.
+                    qa60 = image_ee.select('QA60').reproject(crs=scl.projection())
+                    image_ee = image_ee.addBands(qa60, overwrite=True)
+                    image_ee = image_ee.addBands(scl)
+                except Exception:
+                    # Older scenes may not have an SR counterpart; QA60 and
+                    # s2cloudless masking remain available for those scenes.
+                    pass
             
             # download the images as .tif files
             bands = dict([])
@@ -383,10 +399,11 @@ def retrieve_images(inputs):
                 fp_ms = filepaths[1]
                 fp_swir = filepaths[2]
                 fp_mask = filepaths[3]    
-                # select bands (10m ms RGB+NIR+s2cloudless, 20m SWIR1, 60m QA band)
+                # select the 10 m ms bands, 20 m SWIR1, and available QA/SCL masks
                 bands['ms'] = [im_bands[_] for _ in range(len(im_bands)) if im_bands[_]['id'] in bands_id[:5]]
                 bands['swir'] = [im_bands[_] for _ in range(len(im_bands)) if im_bands[_]['id'] in bands_id[5:6]]
-                bands['mask'] = [im_bands[_] for _ in range(len(im_bands)) if im_bands[_]['id'] in bands_id[-1:]]
+                bands['mask'] = [im_bands[_] for _ in range(len(im_bands))
+                                 if im_bands[_]['id'] in ['QA60', 'SCL']]
                 # adjust polygon for both ms and pan bands
                 proj_ms = image_ee.select('B1').projection()
                 proj_swir = image_ee.select('B11').projection()

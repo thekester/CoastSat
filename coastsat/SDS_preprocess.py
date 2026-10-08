@@ -243,10 +243,19 @@ def preprocess_single(fn, satname, cloud_mask_issue, pan_off, s2cloudless_prob=4
         im_QA = bands[0]
         # compute cloud mask using QA60 band
         cloud_mask_QA60 = create_cloud_mask(im_QA, satname, cloud_mask_issue)
+        # New downloads include the Sentinel-2 scene classification layer as
+        # the second mask band. Class 11 is snow/ice. Keep compatibility with
+        # existing one-band QA60 files.
+        if data.RasterCount > 1:
+            im_SCL = data.GetRasterBand(2).ReadAsArray()
+        else:
+            im_SCL = None
+        cloud_mask_snow = create_snow_mask(im_QA, satname, im_SCL)
         # compute cloud mask using s2cloudless probability band
         cloud_mask_s2cloudless = create_s2cloudless_mask(cloud_prob, s2cloudless_prob)
         # combine both cloud masks
-        cloud_mask = np.logical_or(cloud_mask_QA60,cloud_mask_s2cloudless)
+        cloud_mask = np.logical_or(np.logical_or(cloud_mask_QA60, cloud_mask_s2cloudless),
+                                   cloud_mask_snow)
         
         # check if -inf or nan values on any band and create nodata image
         im_nodata = np.zeros(cloud_mask.shape).astype(bool)
@@ -392,7 +401,20 @@ def create_cloud_mask(im_QA, satname, cloud_mask_issue):
             cloud_mask_temp = morphology.remove_small_objects(cloud_mask_temp, min_size=100, connectivity=1)
             cloud_mask = np.logical_or(cloud_mask, cloud_mask_temp)
 
+    # Keep snow separate from cloud morphology so small snow patches survive.
+    if satname != 'S2':
+        cloud_mask = np.logical_or(cloud_mask, create_snow_mask(im_QA, satname))
+
     return cloud_mask
+
+def create_snow_mask(im_QA, satname, im_SCL=None):
+    """Return a boolean snow/ice mask from Landsat QA_PIXEL or Sentinel-2 SCL."""
+    if satname == 'S2':
+        if im_SCL is None:
+            return np.zeros(im_QA.shape, dtype=bool)
+        return im_SCL == 11
+    # Landsat Collection 2 QA_PIXEL bit 5 marks snow/ice.
+    return (im_QA & (1 << 5)) != 0
 
 def create_s2cloudless_mask(cloud_prob, s2cloudless_prob):
     """
